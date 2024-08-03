@@ -1,0 +1,200 @@
+{
+    "name": "X12_Short_Example",
+    "tag": "X12_Short_Example",
+    "delimiters": {
+        "segment": "~",
+        "field": "*",
+        "component": ":",
+        "subcomponent": "|",
+        "repetition": "^"
+    },
+    "ignoreSegments": ["UNA", "IGN", "UNZ"],
+    "preserveEmptyFields": true,
+    "includeSegmentCode": true,
+    "segments": [
+        {
+            "ref": "ISA_InterchangeControlHeader",
+            "minOccurances": 1,
+            "maxOccurances": 1
+        },
+        {
+            "tag": "X12_FunctionalGroup",
+            "minOccurances": 1,
+            "maxOccurances": 1,
+            "segments": [
+                {
+                    "ref": "GS_FunctionalGroupHeader",
+                    "minOccurances": 1,
+                    "maxOccurances": 1
+                },
+                {
+                    "tag": "X12_TransactionSet",
+                    "minOccurances": 1,
+                    "maxOccurances": 1,
+                    "segments": [
+                        {
+                            "ref": "ST_TransactionSetHeader",
+                            "minOccurances": 1,
+                            "maxOccurances": 1
+                        },
+                        {
+                            "tag": "Loop_1",
+                            "minOccurances": 0,
+                            "maxOccurances": 1,
+                            "segments": [
+                                {
+                                    "ref": "N1_Name",
+                                    "minOccurances": 0,
+                                    "maxOccurances": 1
+                                }
+                            ]
+                        },
+                        {
+                            "ref": "SE_TransactionSetTrailer",
+                            "minOccurances": 1,
+                            "maxOccurances": 1
+                        }
+                    ]
+                },
+                {
+                    "ref": "GE_FunctionalGroupTrailer",
+                    "minOccurances": 1,
+                    "maxOccurances": 1
+                }
+            ]
+        },
+        {
+            "ref": "IEA_InterchangeControlTrailer",
+            "minOccurances": 1,
+            "maxOccurances": 1
+        }
+    ],
+    "segmentDefinitions": {
+        "ISA_InterchangeControlHeader": {
+            "code": "ISA",
+            "tag": "InterchangeControlHeader",
+            "fields": [
+                {
+                    "tag": "ISA01_AuthorizationInformationQualifier",
+                    "dataType": "string",
+                    "required": true,
+                    "length": 2
+                },
+                {
+                    "tag": "ISA02_AuthorizationInformation",
+                    "dataType": "string",
+                    "required": true,
+                    "length": {"min": 1, "max": 10}
+                }
+            ]
+        },
+        "GS_FunctionalGroupHeader": {
+            "code": "GS",
+            "tag": "FunctionalGroupHeader",
+            "fields": [
+                {
+                    "tag": "GS01_FunctionalIdentifierCode",
+                    "dataType": "string",
+                    "required": true,
+                    "length": 2
+                },
+                {
+                    "tag": "GS02_ApplicationSendersCode",
+                    "dataType": "string",
+                    "required": true,
+                    "length": {"min": 2, "max": 15}
+                }
+            ]
+        },
+        "ST_TransactionSetHeader": {
+            "code": "ST",
+            "tag": "TransactionSetHeader",
+            "fields": [
+                {
+                    "tag": "ST01_TransactionSetIdentifierCode",
+                    "dataType": "string",
+                    "required": true,
+                    "length": 3
+                },
+                {
+                    "tag": "ST02_TransactionSetControlNumber",
+                    "dataType": "string",
+                    "required": true,
+                    "length": {"min": 4, "max": 9}
+                }
+            ]
+        },
+        "N1_Name": {
+            "code": "N1",
+            "tag": "Name",
+            "fields": [
+                {
+                    "tag": "N101_EntityIdentifierCode",
+                    "dataType": "string",
+                    "required": true,
+                    "length": 2
+                },
+                {
+                    "tag": "N102_Name",
+                    "dataType": "string",
+                    "required": false,
+                    "length": {"min": 1, "max": 60}
+                }
+            ]
+        },
+        "SE_TransactionSetTrailer": {
+            "code": "SE",
+            "tag": "TransactionSetTrailer",
+            "fields": [
+                {
+                    "tag": "SE01_NumberOfIncludedSegments",
+                    "dataType": "float",
+                    "required": true,
+                    "length": {"min": 1, "max": 10}
+                },
+                {
+                    "tag": "SE02_TransactionSetControlNumber",
+                    "dataType": "string",
+                    "required": true,
+                    "length": {"min": 4, "max": 9}
+                }
+            ]
+        },
+        "GE_FunctionalGroupTrailer": {
+            "code": "GE",
+            "tag": "FunctionalGroupTrailer",
+            "fields": [
+                {
+                    "tag": "GE01_NumberOfTransactionSetsIncluded",
+                    "dataType": "float",
+                    "required": true,
+                    "length": {"min": 1, "max": 6}
+                },
+                {
+                    "tag": "GE02_GroupControlNumber",
+                    "dataType": "string",
+                    "required": true,
+                    "length": {"min": 1, "max": 9}
+                }
+            ]
+        },
+        "IEA_InterchangeControlTrailer": {
+            "code": "IEA",
+            "tag": "InterchangeControlTrailer",
+            "fields": [
+                {
+                    "tag": "IEA01_NumberOfIncludedFunctionalGroups",
+                    "dataType": "float",
+                    "required": true,
+                    "length": {"min": 1, "max": 5}
+                },
+                {
+                    "tag": "IEA02_InterchangeControlNumber",
+                    "dataType": "string",
+                    "required": true,
+                    "length": {"min": 1, "max": 9}
+                }
+            ]
+        }
+    }
+}

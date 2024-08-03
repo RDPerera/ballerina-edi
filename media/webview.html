@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ballerina EDI Schema Editor</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f9f9f9;
+        color: #333;
+      }
+      .container {
+        display: flex;
+        height: 100vh;
+      }
+      .tree-panel {
+        width: 25%;
+        background-color: #f3f3f3;
+        border-right: 1px solid #ddd;
+        overflow-y: auto;
+        padding: 10px;
+      }
+      .editor-panel {
+        width: 75%;
+        padding: 20px;
+        overflow-y: auto;
+        background-color: #f9f9f9;
+      }
+      .tree-panel ul {
+        list-style-type: none;
+        padding: 0;
+      }
+      .tree-panel li {
+        cursor: pointer;
+        padding: 5px;
+        margin: 5px 0;
+      }
+      .tree-panel li:hover {
+        background-color: #e0e0e0;
+      }
+      .editor-panel input,
+      .editor-panel select {
+        display: block;
+        margin-bottom: 10px;
+        padding: 8px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        background-color: #f0f0f0;
+        width: 95%;
+      }
+      .button {
+        display: inline-block;
+        padding: 6px;
+        background-color: white;
+        color: #007acc;
+        border: 1px solid #007acc;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s, color 0.3s;
+        margin: 5px 0;
+        font-size: 13px;
+      }
+      .button:hover {
+        background-color: #007acc;
+        color: white;
+        border: 1px solid white;
+      }
+      .button.green {
+        background-color: white;
+        color: #228b22;
+        border: 1px solid #228b22;
+      }
+      .button.green:hover {
+        background-color: #228b22;
+        color: white;
+        border: 1px solid #228b22;
+      }
+      .button.orange {
+        background-color: white;
+        color: #ffa500;
+        border: 1px solid #ffa500;
+      }
+      .button.orange:hover {
+        background-color: #ffa500;
+        color: white;
+        border: 1px solid #ffa500;
+      }
+      .editor-button {
+        display: inline-block;
+        padding: 6px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s, color 0.3s;
+        margin: 5px 0;
+        font-size: 12px;
+      }
+      .editor-button.purple {
+        background-color: white;
+        color: #800080;
+        border: 1px solid #800080;
+      }
+      .editor-button.purple:hover {
+        background-color: #800080;
+        color: white;
+        border: 1px solid #800080;
+      }
+      .editor-button.orange {
+        background-color: white;
+        color: #ffa500;
+        border: 1px solid #ffa500;
+      }
+      .editor-button.orange:hover {
+        background-color: #ffa500;
+        color: white;
+        border: 1px solid #ffa500;
+      }
+      .editor-button.blue {
+        background-color: white;
+        color: #007acc;
+        border: 1px solid #007acc;
+      }
+      .editor-button.blue:hover {
+        background-color: #007acc;
+        color: white;
+        border: 1px solid #007acc;
+      }
+      .editor-button.green {
+        background-color: white;
+        color: #228b22;
+        border: 1px solid #228b22;
+      }
+      .editor-button.green:hover {
+        background-color: #228b22;
+        color: white;
+        border: 1px solid #228b22;
+      }
+      .editor-button.red {
+        background-color: white;
+        color: #dc3545;
+        border: 1px solid #dc3545;
+      }
+      .editor-button.red:hover {
+        background-color: #dc3545;
+        color: white;
+        border: 1px solid #dc3545;
+      }
+      .section {
+        background-color: white;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .collapsible {
+        cursor: pointer;
+        padding: 5px;
+        background-color: #f3f3f3;
+        border: none;
+        text-align: left;
+        outline: none;
+        font-size: 15px;
+        border-radius: 5px;
+        user-select: none;
+      }
+      .collapsible.active,
+      .collapsible:hover {
+        background-color: #ddd;
+      }
+      .collapsible:after {
+        content: "\002B";
+        color: #007acc;
+        font-weight: bold;
+        float: right;
+        margin-left: 5px;
+      }
+      .collapsible.active:after {
+        content: "\2212";
+      }
+      .content {
+        padding: 0 18px;
+        display: none;
+        overflow: hidden;
+        background-color: #f9f9f9;
+        border-radius: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="tree-panel">
+        <h3>Schema Structure</h3>
+        <button class="button" onclick="openSchema()">
+          <i class="fas fa-folder-open"></i> Open Schema
+        </button>
+        <button class="button" onclick="createNewSchema()">
+          <i class="fas fa-file-alt"></i> Create New
+        </button>
+        <button class="button" onclick="saveSchema()">
+          <i class="fas fa-save"></i> Save Schema
+        </button>
+        <ul id="schema-tree"></ul>
+        <button class="button green" onclick="addSegment()">
+          <i class="fas fa-plus"></i> Add Segment
+        </button>
+        <button class="button green" onclick="addReferenceSegment()">
+          <i class="fas fa-link"></i> Add Reference Segment
+        </button>
+        <ul id="reusable-segments"></ul>
+        <button class="button orange" onclick="addReusableSegment()">
+          <i class="fas fa-plus"></i> Add Reusable Segment
+        </button>
+      </div>
+      <div class="editor-panel">
+        <h3>Editor</h3>
+        <div id="editor-content"></div>
+      </div>
+    </div>
+
+    <script>
+      const vscode = acquireVsCodeApi();
+
+      let schema = {
+        name: "",
+        delimiters: {
+          segment: "~",
+          field: "*",
+          component: ":",
+          repetition: "^",
+        },
+        segments: [],
+        segmentDefinitions: {},
+      };
+
+      function toggleSegment(element, arrow) {
+        if (element.style.display === "none") {
+          element.style.display = "block";
+          arrow.innerHTML = "&#9660;"; // Down arrow
+        } else {
+          element.style.display = "none";
+          arrow.innerHTML = "&#9658;"; // Right arrow
+        }
+      }
+
+      function addSubSegments(segment, ul, parentIndex) {
+        const segmentsToProcess = segment.ref
+          ? schema.segmentDefinitions[segment.ref].segments
+          : segment.segments;
+
+        (segment.fields || []).forEach((field, fieldIndex) => {
+          const fieldLi = document.createElement("li");
+          fieldLi.innerHTML = `<i class="fas fa-cog" style="color: #800080;"></i> ${
+            field.tag
+          } (${field.dataType || "string"})`;
+          fieldLi.style.userSelect = "none"; // Make text not selectable
+          fieldLi.onclick = (event) => {
+            event.stopPropagation();
+            editField(parentIndex, fieldIndex);
+          };
+          ul.appendChild(fieldLi);
+        });
+
+        (segmentsToProcess || []).forEach((subSegment, subIndex) => {
+          const subSegmentLi = document.createElement("li");
+          const subSegmentDetails =
+            schema.segmentDefinitions[subSegment.ref] || subSegment;
+
+          const arrowSpan = document.createElement("span");
+          arrowSpan.innerHTML = "&#9658;"; // Right arrow
+          arrowSpan.style.fontSize = "0.7em";
+          arrowSpan.style.userSelect = "none";
+          arrowSpan.style.marginRight = "5px";
+
+          if (subSegment.ref) {
+            arrowSpan.style.color = "#FFA500";
+            subSegmentLi.innerHTML = `<i class="fas fa-link" style="color: #FFA500;"></i> ${subSegment.ref}`;
+          } else {
+            arrowSpan.style.color = "#228B22";
+            subSegmentLi.innerHTML = `<i class="fas fa-cubes" style="color: #228B22;"></i> ${
+              subSegmentDetails.code || ""
+            } ${subSegmentDetails.tag || ""}`;
+          }
+
+          subSegmentLi.style.userSelect = "none"; // Make text not selectable
+          subSegmentLi.insertBefore(arrowSpan, subSegmentLi.firstChild);
+          subSegmentLi.onclick = (event) => {
+            event.stopPropagation();
+            toggleSegment(subSegmentLi.querySelector("ul"), arrowSpan);
+          };
+          subSegmentLi.ondblclick = (event) => {
+            event.stopPropagation();
+            editSubSegment(parentIndex, subIndex);
+          };
+
+          const subUl = document.createElement("ul");
+          subUl.style.display = "none";
+          addSubSegments(subSegmentDetails, subUl, parentIndex);
+
+          subSegmentLi.appendChild(subUl);
+          ul.appendChild(subSegmentLi);
+        });
+      }
+
+      function updateTree() {
+        const tree = document.getElementById("schema-tree");
+        tree.innerHTML = "<h3>Segments</h3>";
+        schema.segments.forEach((segment, index) => {
+          const li = document.createElement("li");
+          const segmentSpan = document.createElement("span");
+          segmentSpan.style.userSelect = "none"; // Make text not selectable
+          const segmentDetails =
+            schema.segmentDefinitions[segment.ref] || segment;
+
+          const arrowSpan = document.createElement("span");
+          arrowSpan.innerHTML = "&#9658;";
+
+          arrowSpan.style.fontSize = "0.7em";
+          arrowSpan.style.userSelect = "none";
+          arrowSpan.style.marginRight = "5px";
+
+          if (segment.ref) {
+            arrowSpan.style.color = "#FFA500";
+            segmentSpan.innerHTML = `<i class="fas fa-link" style="color: #FFA500;"></i> ${segment.ref}`;
+          } else {
+            arrowSpan.style.color = "#228B22";
+            segmentSpan.innerHTML = `<i class="fas fa-cube" style="color: #228B22;"></i> ${
+              segmentDetails.code || ""
+            } ${segmentDetails.tag || ""}`;
+          }
+
+          segmentSpan.onclick = (event) => {
+            event.stopPropagation();
+            editSegment(index);
+          };
+          li.appendChild(arrowSpan);
+          li.appendChild(segmentSpan);
+          const ul = document.createElement("ul");
+          ul.style.display = "none";
+          addSubSegments(segmentDetails, ul, index);
+          li.appendChild(ul);
+          li.onclick = () => toggleSegment(ul, arrowSpan);
+          li.ondblclick = () => editSegment(index);
+          tree.appendChild(li);
+        });
+
+        const reusableTree = document.getElementById("reusable-segments");
+        reusableTree.innerHTML = "<h3>Reusable Segments</h3>";
+        Object.keys(schema.segmentDefinitions).forEach((key) => {
+          const segment = schema.segmentDefinitions[key];
+          const li = document.createElement("li");
+          const segmentSpan = document.createElement("span");
+          segmentSpan.style.userSelect = "none"; // Make text not selectable
+          const arrowSpan = document.createElement("span");
+          arrowSpan.innerHTML = "&#9658;"; // Right arrow
+          arrowSpan.style.fontSize = "0.7em";
+          arrowSpan.style.userSelect = "none";
+          arrowSpan.style.marginRight = "5px";
+          arrowSpan.style.color = "#FFA500";
+          segmentSpan.innerHTML = `<i class="fas fa-link" style="color: #FFA500;"></i> ${
+            segment.code || ""
+          } ${segment.tag || ""}`;
+          segmentSpan.onclick = (event) => {
+            event.stopPropagation();
+            editReusableSegment(key);
+          };
+          li.appendChild(arrowSpan);
+          li.appendChild(segmentSpan);
+          const ul = document.createElement("ul");
+          ul.style.display = "none";
+          addSubSegments(segment, ul, key);
+          li.appendChild(ul);
+          li.onclick = () => toggleSegment(ul, arrowSpan);
+          li.ondblclick = () => editReusableSegment(key);
+          reusableTree.appendChild(li);
+        });
+      }
+
+      function addSegment() {
+        schema.segments.push({
+          code: "NEW",
+          tag: "newSegment",
+          minOccurances: 1,
+          maxOccurances: -1,
+          fields: [],
+          segments: [],
+        });
+        updateTree();
+      }
+
+      function editSegment(index) {
+        const segment = schema.segments[index];
+        const editor = document.getElementById("editor-content");
+        let segmentDetails = segment;
+        if (segment.ref && schema.segmentDefinitions[segment.ref]) {
+          segmentDetails = schema.segmentDefinitions[segment.ref];
+        }
+        editor.innerHTML = `
+                <div class="section">
+                    <h4>Segment: ${segmentDetails.code}</h4>
+                    <label>Code: <input type="text" value="${
+                      segmentDetails.code
+                    }" onchange="updateSegment(${index}, 'code', this.value)" /></label>
+                    <label>Tag: <input type="text" value="${
+                      segmentDetails.tag
+                    }" onchange="updateSegment(${index}, 'tag', this.value)" /></label>
+                    <label>Min Occurrences: <input type="number" value="${
+                      segment.minOccurances
+                    }" onchange="updateSegment(${index}, 'minOccurances', this.value)" /></label>
+                    <label>Max Occurrences: <input type="number" value="${
+                      segment.maxOccurances
+                    }" onchange="updateSegment(${index}, 'maxOccurances', this.value)" /></label>
+                    <h5>Fields</h5>
+                    <ul>
+                        ${(segmentDetails.fields || [])
+                          .map(
+                            (field, fieldIndex) => `
+                            <li style="list-style-type: none">
+                                Tag: <input type="text" value="${
+                                  field.tag
+                                }" onchange="updateField(${index}, ${fieldIndex}, 'tag', this.value)" />
+                                Data Type: 
+                                <select onchange="updateField(${index}, ${fieldIndex}, 'dataType', this.value)">
+                                    <option value="string" ${
+                                      field.dataType === "string"
+                                        ? "selected"
+                                        : ""
+                                    }>string</option>
+                                    <option value="int" ${
+                                      field.dataType === "int" ? "selected" : ""
+                                    }>int</option>
+                                    <option value="float" ${
+                                      field.dataType === "float"
+                                        ? "selected"
+                                        : ""
+                                    }>float</option>
+                                    <option value="boolean" ${
+                                      field.dataType === "composite"
+                                        ? "selected"
+                                        : ""
+                                    }>composite</option>
+                                </select>
+                                <button class="editor-button red" onclick="removeField(${index}, ${fieldIndex})"><i class="fas fa-trash"></i> Remove Field</button>
+                            </li>
+                        `
+                          )
+                          .join("")}
+                    </ul>
+                    <button class="editor-button purple" onclick="addField(${index})"><i class="fas fa-plus"></i> Add Field</button>
+                </div>
+                <div class="section">
+                    <h5>Sub Segments</h5>
+                    <ul>
+                        ${(segment.segments || [])
+                          .map(
+                            (subSegment, subIndex) => `
+                            <li style="list-style-type: none">
+                                Ref: <input type="text" value="${subSegment.ref}" onchange="updateSubSegment(${index}, ${subIndex}, 'ref', this.value)" />
+                                <button class="editor-button red" onclick="removeSubSegment(${index}, ${subIndex})"><i class="fas fa-trash"></i> Remove Sub Segment</button>
+                            </li>
+                        `
+                          )
+                          .join("")}
+                    </ul>
+                    <button class="editor-button orange" onclick="addSubSegment(${index})"><i class="fas fa-plus"></i> Add Sub Segment</button>
+                </div>
+                <button class="editor-button red" onclick="removeSegment(${index})"><i class="fas fa-trash"></i> Remove Segment</button>
+            `;
+      }
+
+      function updateSegment(index, key, value) {
+        schema.segments[index][key] = value;
+        updateTree();
+        editSegment(index); // Refresh the editor panel
+      }
+
+      function addField(segmentIndex) {
+        schema.segments[segmentIndex].fields.push({
+          tag: "newField",
+          dataType: "string",
+        });
+        updateTree();
+        editSegment(segmentIndex);
+      }
+
+      function updateField(segmentIndex, fieldIndex, key, value) {
+        schema.segments[segmentIndex].fields[fieldIndex][key] = value;
+        updateTree();
+        editSegment(segmentIndex); // Refresh the editor panel
+      }
+
+      function removeField(segmentIndex, fieldIndex) {
+        schema.segments[segmentIndex].fields.splice(fieldIndex, 1);
+        updateTree();
+        editSegment(segmentIndex);
+      }
+
+      function addSubSegment(segmentIndex) {
+        schema.segments[segmentIndex].segments.push({ ref: "newSubSegment" });
+        updateTree();
+        editSegment(segmentIndex);
+      }
+
+      function updateSubSegment(segmentIndex, subIndex, key, value) {
+        schema.segments[segmentIndex].segments[subIndex][key] = value;
+        updateTree();
+        editSegment(segmentIndex); // Refresh the editor panel
+      }
+
+      function removeSubSegment(segmentIndex, subIndex) {
+        schema.segments[segmentIndex].segments.splice(subIndex, 1);
+        updateTree();
+        editSegment(segmentIndex);
+      }
+
+      function removeSegment(index) {
+        schema.segments.splice(index, 1);
+        updateTree();
+        document.getElementById("editor-content").innerHTML = "";
+      }
+
+      function saveSchema() {
+        vscode.postMessage({ command: "saveSchema", schema });
+      }
+
+      function openSchema() {
+        vscode.postMessage({ command: "openSchema" });
+      }
+
+      function createNewSchema() {
+        vscode.postMessage({ command: "createNewSchema" });
+      }
+
+      function addReusableSegment() {
+        vscode.postMessage({ command: "addReusableSegment" });
+      }
+
+      function addReferenceSegment() {
+        const segmentRef = prompt("Enter the segment reference:");
+        if (segmentRef) {
+          vscode.postMessage({ command: "addReferenceSegment", segmentRef });
+        }
+      }
+
+      function editReusableSegment(key) {
+        const segment = schema.segmentDefinitions[key];
+        const editor = document.getElementById("editor-content");
+        editor.innerHTML = `
+                <div class="section">
+                    <h4>Reusable Segment: ${segment.code}</h4>
+                    <label>Code: <input type="text" value="${
+                      segment.code
+                    }" onchange="updateReusableSegment('${key}', 'code', this.value)" /></label>
+                    <label>Tag: <input type="text" value="${
+                      segment.tag
+                    }" onchange="updateReusableSegment('${key}', 'tag', this.value)" /></label>
+                    <h5>Fields</h5>
+                    <ul>
+                        ${(segment.fields || [])
+                          .map(
+                            (field, fieldIndex) => `
+                            <li style="list-style-type: none">
+                                Tag: <input type="text" value="${
+                                  field.tag
+                                }" onchange="updateReusableField('${key}', ${fieldIndex}, 'tag', this.value)" />
+                                Data Type: 
+                                <select onchange="updateReusableField('${key}', ${fieldIndex}, 'dataType', this.value)">
+                                    <option value="string" ${
+                                      field.dataType === "string"
+                                        ? "selected"
+                                        : ""
+                                    }>string</option>
+                                    <option value="int" ${
+                                      field.dataType === "int" ? "selected" : ""
+                                    }>int</option>
+                                    <option value="float" ${
+                                      field.dataType === "float"
+                                        ? "selected"
+                                        : ""
+                                    }>float</option>
+                                    <option value="boolean" ${
+                                      field.dataType === "composite"
+                                        ? "selected"
+                                        : ""
+                                    }>composite</option>
+                                </select>
+                                <button class="editor-button red" onclick="removeReusableField('${key}', ${fieldIndex})"><i class="fas fa-trash"></i> Remove Field</button>
+                            </li>
+                        `
+                          )
+                          .join("")}
+                    </ul>
+                    <button class="editor-button purple" onclick="addReusableField('${key}')"><i class="fas fa-plus"></i> Add Field</button>
+                </div>
+            `;
+      }
+
+      function updateReusableSegment(key, property, value) {
+        schema.segmentDefinitions[key][property] = value;
+        updateTree();
+        editReusableSegment(key);
+      }
+
+      function addReusableField(key) {
+        schema.segmentDefinitions[key].fields.push({
+          tag: "newField",
+          dataType: "string",
+        });
+        updateTree();
+        editReusableSegment(key);
+      }
+
+      function updateReusableField(key, fieldIndex, property, value) {
+        schema.segmentDefinitions[key].fields[fieldIndex][property] = value;
+        updateTree();
+        editReusableSegment(key);
+      }
+
+      function removeReusableField(key, fieldIndex) {
+        schema.segmentDefinitions[key].fields.splice(fieldIndex, 1);
+        updateTree();
+        editReusableSegment(key);
+      }
+
+      window.addEventListener("message", (event) => {
+        const message = event.data;
+        switch (message.command) {
+          case "setSchema":
+            schema = message.schema;
+            updateTree();
+            break;
+          case "getSchema":
+            vscode.postMessage({ command: "returnSchema", schema });
+            break;
+        }
+      });
+
+      updateTree();
+    </script>
+  </body>
+</html>
